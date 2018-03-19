@@ -2,10 +2,12 @@ import numpy as np
 import cv2
 from matplotlib import pyplot as plt
 import time
-import pygame.mixer
-
-pygame.init()
-pygame.mixer.music.load("beep-01a.wav")
+# import pygame.mixer
+import RPi.GPIO as GPIO
+GPIO.setmode(GPIO.BOARD)
+GPIO.setup(18, GPIO.OUT)
+# pygame.init()
+# pygame.mixer.music.load("beep-01a.wav")
 
 #import pyglet
 #music = pyglet.resource.media('beep-01a.wav')
@@ -55,7 +57,9 @@ def detect_and_draw(img, gray):
                 break;
             
             image_name = 'Eye_' + str(cnt_eye)
-
+            #print image_name
+            
+            #change dimentionas
             ex = ex + (ew/6)
             ew = ew - (ew/6)
             ey = ey + (eh/3)
@@ -103,6 +107,10 @@ def detect_and_draw(img, gray):
             #cv2.imshow(image_name, roi_eye_gray2)
             if image_name == "Eye_0":
                 ag = push_val(total_white)
+                #print image_name, " : ", total_white, " : ", ag
+
+            #print "Black ", total_black
+            #print "White ", total_white
             
             if(simulate_real_time == "true"):
                 pass
@@ -112,10 +120,14 @@ def detect_and_draw(img, gray):
                 else:
                     cv2.putText(img, ""+str(total_white), (520, 40), cv2.FONT_HERSHEY_PLAIN, 2, 255)
             else:
+                # Plot Histogram
                 plt.subplot(2,3,((cnt_eye*3)+1)),plt.hist(roi_eye_gray.ravel(), 256, [0,256])
                 plt.title(image_name+' Hist')
+                # Plot Eye Images
                 plt.subplot(2,3,((cnt_eye*3)+2)),plt.imshow(roi_eye_color, 'gray')
                 plt.title(image_name+' Image Threshold')
+
+                # Plot Eye Images after threshold
                 plt.subplot(2,3,((cnt_eye*3)+3)),plt.imshow(roi_eye_gray2, 'gray')
                 plt.title(image_name+' Image')
             
@@ -130,7 +142,9 @@ def detect_and_draw(img, gray):
             #player.pause()
         else:
             print "---------------------", average
-            pygame.mixer.music.play()
+            GPIO.output(18, GPIO.HIGH)
+            GPIO.output(18, GPIO.LOW)
+            #pygame.mixer.music.play()
             #if player.playing == False:
             #    print "Play music"
             #    player.queue(music)
@@ -141,6 +155,7 @@ def detect_and_draw(img, gray):
     if(simulate_real_time == "false"):
         plt.show()
     #img.releaseImage()
+    
 
 if __name__ == '__main__':
     if(simulate_real_time == "true"):
@@ -163,9 +178,19 @@ if __name__ == '__main__':
                     continue
         cap.release()
     else:
-
+        # Capture frame-by-frame
         frame = cv2.imread('face_img.jpg')
+        
+        # Resize Image
         frame = cv2.resize(frame, (600, 350))
+
+        # Our operations on the frame come here
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+
         detect_and_draw(frame, gray)
+        #cv2.waitKey(0)
+
+        # Display the resulting frame
+        #cv2.imshow('frame',gray)
+    
     cv2.destroyAllWindows()
